@@ -115,7 +115,11 @@
   });
 
   els.resetBtn.addEventListener("click", () => vscode.postMessage({ type: "resetXp" }));
-  els.testFireworks.addEventListener("click", () => fw.start());
+  els.testFireworks.addEventListener("click", () => {
+    // Play sound if enabled (same as real fireworks)
+    if (els.sound.checked) playBeep(0.5);
+    fw.start();
+  });
 
   function setState({ xp, level, xpNext, xpLevelStart = 0 }) {
     const current = xp - xpLevelStart;
