@@ -7,6 +7,12 @@ It makes your coding experience 1000x more ridiculous:
 - XP and levels with fireworks on level up
 - Docked panel with toggles and progress; XP persists
 
+## Credits
+
+This VS Code extension is inspired by and recreates the experience of:
+- Original Godot plugin "ridiculous_coding" by John Watson: https://github.com/jotson/ridiculous_coding
+- Inspired by Textreme2 by Ash K: https://ash-k.itch.io/textreme-2
+
 ## Quick start
 1. `npm install`
 2. Press F5 to start the Extension Host.
