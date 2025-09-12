@@ -38,6 +38,16 @@ For users who need reduced visual effects or find the animations distracting, en
 - Keeps XP progression working normally
 - Can be toggled via the panel or VS Code settings
 
+## Development Setup
+
+To run this extension locally for development:
+
+1. **Install dependencies:** `npm install`
+2. **Compile TypeScript:** `npm run compile` 
+3. **Open in VS Code:** Press F5 or Run → Start Debugging
+
+The extension must be compiled before it can run. If you see panel errors, ensure you've run steps 1-2 first.
+
 ## Notes
 - “Shake” is approximated by jittering decorations; VS Code doesn’t allow moving the window/editor.
 - Sounds are synthesized via Web Audio in the panel (no binaries).

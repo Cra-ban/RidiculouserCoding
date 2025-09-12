@@ -11,7 +11,6 @@
   "categories": [
     "Other"
   ],
-  "icon": "media/icons/icon.svg",
   "activationEvents": [
     "onStartupFinished",
     "onLanguage:*",
