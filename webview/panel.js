@@ -161,5 +161,12 @@
     }
   });
 
-  vscode.postMessage({ type: "ready" });
+  // Wait for DOM to be ready before sending ready message
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      vscode.postMessage({ type: "ready" });
+    });
+  } else {
+    vscode.postMessage({ type: "ready" });
+  }
 })();

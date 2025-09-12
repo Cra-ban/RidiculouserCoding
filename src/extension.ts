@@ -216,17 +216,7 @@ export function activate(context: vscode.ExtensionContext) {
     post({ type: "state", xp: xp.xp, level: xp.level, xpNext: xp.xpNextAbs, xpLevelStart: xp.xpStartOfLevel });
   }
 
-  // Send initial state when view appears
-  setTimeout(() => {
-    post({
-      type: "init",
-      settings,
-      xp: xp.xp,
-      level: xp.level,
-      xpNext: xp.xpNextAbs,
-      xpLevelStart: xp.xpStartOfLevel
-    });
-  }, 500);
+  // Initial state is sent by PanelViewProvider when webview is ready
 }
 
 export function deactivate() {
