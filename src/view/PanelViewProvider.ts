@@ -70,7 +70,8 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
       sound: cfg.get("sound", true),
       fireworks: cfg.get("fireworks", true),
       baseXp: cfg.get("leveling.baseXp", 50),
-      enableStatusBar: cfg.get("enableStatusBar", true)
+      enableStatusBar: cfg.get("enableStatusBar", true),
+      reducedEffects: cfg.get("reducedEffects", false)
     };
   }
 
@@ -83,7 +84,8 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
       sound: "sound",
       fireworks: "fireworks",
       baseXp: "leveling.baseXp",
-      enableStatusBar: "enableStatusBar"
+      enableStatusBar: "enableStatusBar",
+      reducedEffects: "reducedEffects"
     };
     const configKey = map[key];
     if (!configKey) return;
@@ -116,6 +118,7 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
     <label><input id="shake" type="checkbox"> Shake</label>
     <label><input id="sound" type="checkbox"> Sound</label>
     <label><input id="fireworks" type="checkbox"> Fireworks</label>
+    <label><input id="reducedEffects" type="checkbox"> Reduced Effects</label>
   </section>
 
   <section class="xp">

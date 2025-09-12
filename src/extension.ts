@@ -14,7 +14,8 @@ export function activate(context: vscode.ExtensionContext) {
     sound: cfg.get("sound", true),
     fireworks: cfg.get("fireworks", true),
     baseXp: cfg.get("leveling.baseXp", 50),
-    enableStatusBar: cfg.get("enableStatusBar", true)
+    enableStatusBar: cfg.get("enableStatusBar", true),
+    reducedEffects: cfg.get("reducedEffects", false)
   };
 
   const xp = new XPService(context, settings.baseXp);
@@ -57,7 +58,8 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("ridiculousCoding.toggleChars", () => toggle("chars")),
     vscode.commands.registerCommand("ridiculousCoding.toggleShake", () => toggle("shake")),
     vscode.commands.registerCommand("ridiculousCoding.toggleSound", () => toggle("sound")),
-    vscode.commands.registerCommand("ridiculousCoding.toggleFireworks", () => toggle("fireworks"))
+    vscode.commands.registerCommand("ridiculousCoding.toggleFireworks", () => toggle("fireworks")),
+    vscode.commands.registerCommand("ridiculousCoding.toggleReducedEffects", () => toggle("reducedEffects"))
   );
 
   function toggle<K extends keyof Settings>(key: K) {
@@ -69,7 +71,8 @@ export function activate(context: vscode.ExtensionContext) {
       sound: "sound",
       fireworks: "fireworks",
       baseXp: "leveling.baseXp",
-      enableStatusBar: "enableStatusBar"
+      enableStatusBar: "enableStatusBar",
+      reducedEffects: "reducedEffects"
     };
     const configKey = map[key];
     if (!configKey) return;
@@ -83,6 +86,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration("ridiculousCoding")) return;
       const cfg = vscode.workspace.getConfiguration("ridiculousCoding");
+      const oldReducedEffects = settings.reducedEffects;
       settings = {
         explosions: cfg.get("explosions", true),
         blips: cfg.get("blips", true),
@@ -91,8 +95,17 @@ export function activate(context: vscode.ExtensionContext) {
         sound: cfg.get("sound", true),
         fireworks: cfg.get("fireworks", true),
         baseXp: cfg.get("leveling.baseXp", 50),
-        enableStatusBar: cfg.get("enableStatusBar", true)
+        enableStatusBar: cfg.get("enableStatusBar", true),
+        reducedEffects: cfg.get("reducedEffects", false)
       };
+      
+      // If reduced effects was just enabled, clear all decorations
+      if (!oldReducedEffects && settings.reducedEffects) {
+        vscode.window.visibleTextEditors.forEach(editor => {
+          effects.clearAllDecorations(editor);
+        });
+      }
+      
       xp.setBaseXp(settings.baseXp);
       pushState();
       updateStatus();
@@ -147,24 +160,29 @@ export function activate(context: vscode.ExtensionContext) {
           ? "⌫"
           : undefined;
 
-      if (isInsert && settings.blips) {
-  effects.showBlip(editor, settings.chars, settings.shake, charLabel);
+      if (isInsert && settings.blips && !settings.reducedEffects) {
+        effects.showBlip(editor, settings.chars, settings.shake, charLabel);
         pitchIncrease += 1.0;
-        // Sound via panel
-        post({ type: "blip", pitch: 1.0 + pitchIncrease * 0.05, enabled: settings.sound });
-        // XP
+        // Sound via panel (disabled in reduced effects mode)
+        post({ type: "blip", pitch: 1.0 + pitchIncrease * 0.05, enabled: settings.sound && !settings.reducedEffects });
+        // XP (always gained, even in reduced effects)
         const leveled = xp.addXp(1);
-        if (leveled && settings.fireworks) post({ type: "fireworks", enabled: settings.sound });
+        if (leveled && settings.fireworks && !settings.reducedEffects) post({ type: "fireworks", enabled: settings.sound && !settings.reducedEffects });
         pushState();
         updateStatus();
-      } else if (isDelete && settings.explosions) {
-  effects.showBoom(editor, settings.chars, settings.shake, charLabel);
-        post({ type: "boom", enabled: settings.sound });
+      } else if (isInsert) {
+        // Still gain XP even in reduced effects mode
+        const leveled = xp.addXp(1);
+        pushState();
+        updateStatus();
+      } else if (isDelete && settings.explosions && !settings.reducedEffects) {
+        effects.showBoom(editor, settings.chars, settings.shake, charLabel);
+        post({ type: "boom", enabled: settings.sound && !settings.reducedEffects });
         pushState();
       }
 
-      // Newline detection within this change
-      if (settings.blips && insertedText.includes("\n")) {
+      // Newline detection within this change (also disabled in reduced effects)
+      if (settings.blips && insertedText.includes("\n") && !settings.reducedEffects) {
         effects.showNewline(editor, settings.shake);
       }
 
@@ -176,7 +194,7 @@ export function activate(context: vscode.ExtensionContext) {
       const editor = e.textEditor;
       const last = lastLineByEditor.get(editor);
       const now = editor.selection.active.line;
-      if (last !== undefined && now !== last && settings.blips) {
+      if (last !== undefined && now !== last && settings.blips && !settings.reducedEffects) {
         effects.showNewline(editor, settings.shake);
       }
       lastLineByEditor.set(editor, now);

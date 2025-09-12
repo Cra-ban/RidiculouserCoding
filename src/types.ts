@@ -7,6 +7,7 @@ export type Settings = {
   fireworks: boolean;
   baseXp: number;
   enableStatusBar: boolean;
+  reducedEffects: boolean;
 };
 
 export type PanelMessageFromExt =

@@ -8,6 +8,7 @@
     shake: document.getElementById("shake"),
     sound: document.getElementById("sound"),
     fireworks: document.getElementById("fireworks"),
+    reducedEffects: document.getElementById("reducedEffects"),
     levelLabel: document.getElementById("levelLabel"),
     xpLabel: document.getElementById("xpLabel"),
     barInner: document.getElementById("barInner"),
@@ -108,7 +109,7 @@
   };
 
   // Wire toggles
-  ["explosions", "blips", "chars", "shake", "sound", "fireworks"].forEach(key => {
+  ["explosions", "blips", "chars", "shake", "sound", "fireworks", "reducedEffects"].forEach(key => {
     els[key].addEventListener("change", () => {
       vscode.postMessage({ type: "toggle", key, value: els[key].checked });
     });
@@ -141,6 +142,7 @@
         els.shake.checked = msg.settings.shake;
         els.sound.checked = msg.settings.sound;
         els.fireworks.checked = msg.settings.fireworks;
+        els.reducedEffects.checked = msg.settings.reducedEffects;
         setState(msg);
         break;
       case "state":
