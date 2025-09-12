@@ -29,7 +29,8 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
             settings: this.getSettings(),
             xp: this.context.globalState.get("xp", 0),
             level: this.context.globalState.get("level", 1),
-            xpNext: this.context.globalState.get("xpNextAbs", 100)
+            xpNext: this.context.globalState.get("xpNextAbs", 100),
+            xpLevelStart: this.context.globalState.get("xpLevelStart", 0)
           });
           break;
         case "toggle":
@@ -43,7 +44,8 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
             type: "state",
             xp: this.context.globalState.get("xp", 0),
             level: this.context.globalState.get("level", 1),
-            xpNext: this.context.globalState.get("xpNextAbs", 100)
+            xpNext: this.context.globalState.get("xpNextAbs", 100),
+            xpLevelStart: this.context.globalState.get("xpLevelStart", 0)
           });
           break;
       }

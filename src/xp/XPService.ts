@@ -22,14 +22,18 @@ export class XPService {
   }
 
   get progress(): { current: number; max: number } {
-    const max = this.xpNextAbs - this.xpStartOfLevel();
-    return { current: this.xp - this.xpStartOfLevel(), max };
+    const max = this.xpNextAbs - this.xpStartOfLevelInternal();
+    return { current: this.xp - this.xpStartOfLevelInternal(), max };
   }
 
-  private xpStartOfLevel(): number {
+  private xpStartOfLevelInternal(): number {
     // We store absolute xp; to derive start-of-level, deduce from xpNextAbs and base formula.
     // Simplify: track last level-up xp in globalState too; fallback to 0 for level 1.
     return this.context.globalState.get<number>("xpLevelStart", 0);
+  }
+
+  get xpStartOfLevel(): number {
+    return this.xpStartOfLevelInternal();
   }
 
   private setXpStartOfLevel(v: number) {

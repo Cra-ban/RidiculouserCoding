@@ -117,10 +117,9 @@
   els.resetBtn.addEventListener("click", () => vscode.postMessage({ type: "resetXp" }));
   els.testFireworks.addEventListener("click", () => fw.start());
 
-  function setState({ xp, level, xpNext }) {
-    const startOfLevel = Number(window.localStorage.getItem("xpLevelStart")) || 0;
-    const current = xp - startOfLevel;
-    const max = xpNext - startOfLevel;
+  function setState({ xp, level, xpNext, xpLevelStart = 0 }) {
+    const current = xp - xpLevelStart;
+    const max = xpNext - xpLevelStart;
     els.levelLabel.textContent = `Level: ${level}`;
     els.xpLabel.textContent = `XP: ${xp} / ${xpNext}`;
     const pct = Math.max(0, Math.min(100, (current / Math.max(1, max)) * 100));
@@ -139,7 +138,6 @@
         els.sound.checked = msg.settings.sound;
         els.fireworks.checked = msg.settings.fireworks;
         setState(msg);
-        vscode.setState({ xpLevelStart: 0 }); // placeholder
         break;
       case "state":
         setState(msg);

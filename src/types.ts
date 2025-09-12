@@ -10,8 +10,8 @@ export type Settings = {
 };
 
 export type PanelMessageFromExt =
-  | { type: "init"; settings: Settings; xp: number; level: number; xpNext: number }
-  | { type: "state"; xp: number; level: number; xpNext: number }
+  | { type: "init"; settings: Settings; xp: number; level: number; xpNext: number; xpLevelStart: number }
+  | { type: "state"; xp: number; level: number; xpNext: number; xpLevelStart: number }
   | { type: "blip"; pitch: number; enabled: boolean }
   | { type: "boom"; enabled: boolean }
   | { type: "fireworks"; enabled: boolean };
