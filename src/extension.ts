@@ -102,7 +102,8 @@ export function activate(context: vscode.ExtensionContext) {
         settings,
         xp: xp.xp,
         level: xp.level,
-        xpNext: xp.xpNextAbs
+        xpNext: xp.xpNextAbs,
+        xpLevelStart: xp.xpStartOfLevel
       });
     })
   );
@@ -150,7 +151,7 @@ export function activate(context: vscode.ExtensionContext) {
   effects.showBlip(editor, settings.chars, settings.shake, charLabel);
         pitchIncrease += 1.0;
         // Sound via panel
-        post({ type: "blip", pitch: 1.0 + pitchIncrease * 0.01, enabled: settings.sound });
+        post({ type: "blip", pitch: 1.0 + pitchIncrease * 0.05, enabled: settings.sound });
         // XP
         const leveled = xp.addXp(1);
         if (leveled && settings.fireworks) post({ type: "fireworks", enabled: settings.sound });
@@ -194,7 +195,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   function pushState() {
-    post({ type: "state", xp: xp.xp, level: xp.level, xpNext: xp.xpNextAbs });
+    post({ type: "state", xp: xp.xp, level: xp.level, xpNext: xp.xpNextAbs, xpLevelStart: xp.xpStartOfLevel });
   }
 
   // Send initial state when view appears
@@ -204,7 +205,8 @@ export function activate(context: vscode.ExtensionContext) {
       settings,
       xp: xp.xp,
       level: xp.level,
-      xpNext: xp.xpNextAbs
+      xpNext: xp.xpNextAbs,
+      xpLevelStart: xp.xpStartOfLevel
     });
   }, 500);
 }
