@@ -1,0 +1,121 @@
+{
+  "name": "ridiculous-coding",
+  "displayName": "Ridiculous Coding",
+  "description": "Make your coding experience 1000x more ridiculous in VS Code: blips, booms, fireworks, XP and levels.",
+  "version": "0.0.1",
+  "publisher": "your-name-here",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "icon": "media/icons/icon.png",
+  "activationEvents": [
+    "onStartupFinished",
+    "onLanguage:*",
+    "onCommand:ridiculousCoding.showPanel"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Ridiculous Coding",
+      "properties": {
+        "ridiculousCoding.explosions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show 'boom' effects when deleting."
+        },
+        "ridiculousCoding.blips": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show 'blip' effects when typing and newline animation."
+        },
+        "ridiculousCoding.chars": {
+          "type": "boolean",
+          "default": true,
+          "description": "Overlay the last key/character label with the effects."
+        },
+        "ridiculousCoding.shake": {
+          "type": "boolean",
+          "default": true,
+          "description": "Approximate editor 'shake' by jittering effect decorations."
+        },
+        "ridiculousCoding.sound": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play sounds for blips, booms, and fireworks from the panel."
+        },
+        "ridiculousCoding.fireworks": {
+          "type": "boolean",
+          "default": true,
+          "description": "Celebrate level-ups with fireworks in the panel."
+        },
+        "ridiculousCoding.leveling.baseXp": {
+          "type": "number",
+          "default": 50,
+          "minimum": 10,
+          "description": "Base XP used in the level-up curve (original plugin uses 50)."
+        },
+        "ridiculousCoding.enableStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show XP/Level in the status bar."
+        }
+      }
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "ridiculousCoding.panel",
+          "name": "Ridiculous Coding"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "ridiculousCoding.showPanel",
+        "title": "Ridiculous Coding: Show Panel"
+      },
+      {
+        "command": "ridiculousCoding.resetXp",
+        "title": "Ridiculous Coding: Reset XP"
+      },
+      {
+        "command": "ridiculousCoding.toggleExplosions",
+        "title": "Ridiculous Coding: Toggle Explosions"
+      },
+      {
+        "command": "ridiculousCoding.toggleBlips",
+        "title": "Ridiculous Coding: Toggle Blips"
+      },
+      {
+        "command": "ridiculousCoding.toggleChars",
+        "title": "Ridiculous Coding: Toggle Char Labels"
+      },
+      {
+        "command": "ridiculousCoding.toggleShake",
+        "title": "Ridiculous Coding: Toggle Shake"
+      },
+      {
+        "command": "ridiculousCoding.toggleSound",
+        "title": "Ridiculous Coding: Toggle Sound"
+      },
+      {
+        "command": "ridiculousCoding.toggleFireworks",
+        "title": "Ridiculous Coding: Toggle Fireworks"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.10",
+    "@types/vscode": "^1.84.0",
+    "typescript": "^5.5.4"
+  }
+}
