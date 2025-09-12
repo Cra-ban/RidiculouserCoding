@@ -20,6 +20,18 @@ body {
   margin-bottom: 10px;
 }
 
+.toggles label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.toggles input[type="checkbox"] {
+  margin: 0;
+}
+
 .xp .labels {
   display: flex;
   justify-content: space-between;
@@ -54,6 +66,16 @@ button {
   padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+button:hover {
+  background: var(--vscode-button-hoverBackground, var(--accent));
+  opacity: 0.9;
+}
+
+button:active {
+  opacity: 0.8;
 }
 
 #fwCanvas {
