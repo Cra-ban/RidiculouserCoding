@@ -1,9 +1,9 @@
 {
   "name": "ridiculous-coding",
   "displayName": "Ridiculous Coding",
-  "description": "Make your coding experience 1000x more ridiculous in VS Code: blips, booms, fireworks, XP and levels.",
-  "version": "0.0.1",
-  "publisher": "your-name-here",
+  "description": "Make your coding experience 1000x more ridiculous in VS Code: blips, booms, fireworks, XP and levels. Inspired by the Godot Rediculous Coding plugin by jotson.",
+  "version": "0.0.2",
+  "publisher": "Merenut",
   "license": "MIT",
   "engines": {
     "vscode": "^1.84.0"
@@ -12,8 +12,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onLanguage:*"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
