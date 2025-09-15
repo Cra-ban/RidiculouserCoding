@@ -17,49 +17,50 @@
     fwCanvas: document.getElementById("fwCanvas")
   };
 
-  // Web Audio setup
-  let audioCtx;
-  const ensureAudio = () => {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    return audioCtx;
-  };
-
-  function playBeep(pitch = 1.0) {
+  // WebAudio engine using decoded WAV buffers
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let actx = null;
+  const buffers = { blip: null, boom: null, fireworks: null };
+  let audioUnlocked = false;
+  async function fetchArrayBuffer(url) {
+    const res = await fetch(url);
+    return await res.arrayBuffer();
+  }
+  async function preloadSounds(uris) {
     try {
-      const actx = ensureAudio();
-      const o = actx.createOscillator();
-      const g = actx.createGain();
-      o.type = "triangle";
-      o.frequency.value = 440 * pitch;
-      g.gain.value = 0.03;
-      o.connect(g).connect(actx.destination);
-      o.start();
-      o.stop(actx.currentTime + 0.08);
+      actx = actx || new AudioCtx();
+      const entries = Object.entries(uris);
+      for (const [k, u] of entries) {
+        const ab = await fetchArrayBuffer(u);
+        buffers[k] = await actx.decodeAudioData(ab);
+      }
     } catch {}
   }
-
-  function playExplosion() {
+  async function unlockAudio() {
+    if (audioUnlocked) return;
     try {
-      const actx = ensureAudio();
-      const bufferSize = 2 * actx.sampleRate;
-      const noiseBuffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        output[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize); // decay
+      actx = actx || new AudioCtx();
+      if (actx.state === 'suspended') await actx.resume();
+      audioUnlocked = true;
+      const n = document.getElementById('soundNotice');
+      if (n) n.remove();
+    } catch {}
+  }
+  function playWav(kind, opts = {}) {
+    try {
+      if (!audioUnlocked || !buffers[kind]) return;
+      if (actx && actx.state === 'suspended') {
+        actx.resume().catch(() => {});
       }
-      const whiteNoise = actx.createBufferSource();
-      whiteNoise.buffer = noiseBuffer;
-
-      const filter = actx.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = 1000;
-
+      const src = actx.createBufferSource();
+      src.buffer = buffers[kind];
+      if (opts.playbackRate && typeof opts.playbackRate === 'number') {
+        src.playbackRate.value = Math.max(0.5, Math.min(3.0, opts.playbackRate));
+      }
       const gain = actx.createGain();
-      gain.gain.value = 0.05;
-
-      whiteNoise.connect(filter).connect(gain).connect(actx.destination);
-      whiteNoise.start();
-      whiteNoise.stop(actx.currentTime + 0.2);
+      gain.gain.value = 0.5;
+      src.connect(gain).connect(actx.destination);
+      src.start();
     } catch {}
   }
 
@@ -143,19 +144,23 @@
         els.sound.checked = msg.settings.sound;
         els.fireworks.checked = msg.settings.fireworks;
         els.reducedEffects.checked = msg.settings.reducedEffects;
+  preloadSounds({ blip: msg.soundUris.blip, boom: msg.soundUris.boom, fireworks: msg.soundUris.fireworks });
+  // Unlock audio on first interaction
+  document.addEventListener('click', unlockAudio, { once: true });
+  document.addEventListener('keydown', unlockAudio, { once: true });
         setState(msg);
         break;
       case "state":
         setState(msg);
         break;
       case "blip":
-        if (msg.enabled) playBeep(msg.pitch || 1.0);
+        if (msg.enabled) playWav('blip', { playbackRate: msg.pitch ?? 1.0 });
         break;
       case "boom":
-        if (msg.enabled) playExplosion();
+        if (msg.enabled) playWav('boom');
         break;
       case "fireworks":
-        if (msg.enabled) playBeep(0.5);
+        if (msg.enabled) playWav('fireworks');
         fw.start();
         break;
     }

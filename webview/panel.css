@@ -4,29 +4,39 @@
   --bg: var(--vscode-sideBar-background);
   --accent: var(--vscode-button-background);
   --bar: var(--vscode-editor-inactiveSelectionBackground);
+  --muted: var(--vscode-descriptionForeground);
+  --card: color-mix(in oklab, var(--bg), #000 6%);
+  --card-border: color-mix(in oklab, var(--fg), transparent 85%);
 }
 
 body {
   font: var(--vscode-font-family);
   color: var(--fg);
   background: var(--bg);
-  padding: 10px;
+  padding: 12px;
+  line-height: 1.4;
 }
+
+.container { max-width: 720px; margin: 0 auto; }
+
+.header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.logo { width: 28px; height: 28px; opacity: 0.9; }
+.title h1 { font-size: 16px; margin: 0; }
+.subtitle { margin: 0; font-size: 12px; color: var(--muted); }
+
+.card { background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+.card-title { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 
 .toggles {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px 12px;
-  margin-bottom: 10px;
+  gap: 8px 12px;
 }
 
-.toggles label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  font-size: 13px;
-}
+.toggle-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 999px; border: 1px solid var(--card-border); background: color-mix(in oklab, var(--bg), #000 4%); cursor: pointer; font-size: 12px; }
+.toggle-pill:hover { border-color: color-mix(in oklab, var(--accent), transparent 60%); }
+.toggle-pill input { margin: 0; }
+.toggle-pill span { user-select: none; }
 
 .toggles input[type="checkbox"] {
   margin: 0;
@@ -35,13 +45,16 @@ body {
 .xp .labels {
   display: flex;
   justify-content: space-between;
-  margin: 6px 0;
+  margin: 6px 0 8px;
 }
 
+.badge { display: inline-flex; align-items: center; gap: 6px; background: color-mix(in oklab, var(--accent), transparent 75%); color: var(--accent); border: 1px solid color-mix(in oklab, var(--accent), transparent 70%); padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+.muted { color: var(--muted); font-size: 12px; }
+
 .bar {
-  height: 10px;
-  background: var(--bar);
-  border-radius: 6px;
+  height: 12px;
+  background: color-mix(in oklab, var(--bar), #000 6%);
+  border-radius: 999px;
   overflow: hidden;
   position: relative;
 }
@@ -59,7 +72,7 @@ body {
   gap: 8px;
 }
 
-button {
+.btn {
   background: var(--accent);
   color: var(--vscode-button-foreground);
   border: none;
@@ -68,15 +81,18 @@ button {
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
-
-button:hover {
+.btn:hover {
   background: var(--vscode-button-hoverBackground, var(--accent));
   opacity: 0.9;
 }
-
-button:active {
+.btn:active {
   opacity: 0.8;
 }
+
+.btn.ghost { background: transparent; border: 1px solid var(--card-border); color: var(--fg); }
+.btn.ghost:hover { background: color-mix(in oklab, var(--bg), #000 4%); }
+
+#soundNotice.notice { margin-bottom: 8px; padding: 8px 10px; border-radius: 8px; border: 1px dashed var(--card-border); background: color-mix(in oklab, var(--bg), #000 3%); font-size: 12px; color: var(--muted); cursor: pointer; }
 
 #fwCanvas {
   width: 100%;

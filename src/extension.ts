@@ -11,6 +11,8 @@ export function activate(context: vscode.ExtensionContext) {
     blips: cfg.get("blips", true),
     chars: cfg.get("chars", true),
     shake: cfg.get("shake", true),
+    shakeAmplitude: cfg.get("shakeAmplitude", 6),
+    shakeDecayMs: cfg.get("shakeDecayMs", 120),
     sound: cfg.get("sound", true),
     fireworks: cfg.get("fireworks", true),
     baseXp: cfg.get("leveling.baseXp", 50),
@@ -41,6 +43,8 @@ export function activate(context: vscode.ExtensionContext) {
     status.show();
   }
   updateStatus();
+  // One-time panel reveal to help unlock audio on first sound attempt
+  let revealedForSound = false;
 
   // Commands
   context.subscriptions.push(
@@ -92,6 +96,8 @@ export function activate(context: vscode.ExtensionContext) {
         blips: cfg.get("blips", true),
         chars: cfg.get("chars", true),
         shake: cfg.get("shake", true),
+        shakeAmplitude: cfg.get("shakeAmplitude", 6),
+        shakeDecayMs: cfg.get("shakeDecayMs", 120),
         sound: cfg.get("sound", true),
         fireworks: cfg.get("fireworks", true),
         baseXp: cfg.get("leveling.baseXp", 50),
@@ -109,10 +115,9 @@ export function activate(context: vscode.ExtensionContext) {
       xp.setBaseXp(settings.baseXp);
       pushState();
       updateStatus();
-      // Re-send init with new settings
+      // Update panel state (init is sent by PanelViewProvider and includes sound URIs)
       post({
-        type: "init",
-        settings,
+        type: "state",
         xp: xp.xp,
         level: xp.level,
         xpNext: xp.xpNextAbs,
@@ -121,18 +126,10 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Pitch increase like the original (decays over time)
+  // Pitch increase that resets shortly after typing stops
   let pitchIncrease = 0;
-  let lastDecay = Date.now();
-  const PITCH_DECREMENT = 2.0 / 1000; // per ms
-  setInterval(() => {
-    const now = Date.now();
-    const dt = now - lastDecay;
-    lastDecay = now;
-    if (pitchIncrease > 0) {
-      pitchIncrease = Math.max(0, pitchIncrease - dt * PITCH_DECREMENT);
-    }
-  }, 50);
+  let pitchResetTimer: NodeJS.Timeout | undefined;
+  const PITCH_RESET_MS = 180; // reset a short time after typing stops
 
   // Event handling: typing, deleting, newline
   let lastLineByEditor = new WeakMap<vscode.TextEditor, number>();
@@ -157,14 +154,21 @@ export function activate(context: vscode.ExtensionContext) {
         isInsert && settings.chars
           ? sanitizeLabel(insertedText[0] ?? "")
           : isDelete && settings.chars
-          ? "⌫"
+          ? "BACKSPACE"
           : undefined;
 
       if (isInsert && settings.blips && !settings.reducedEffects) {
+        if (settings.sound && !revealedForSound) {
+          revealedForSound = true;
+          panelProvider.reveal();
+        }
         effects.showBlip(editor, settings.chars, settings.shake, charLabel);
         pitchIncrease += 1.0;
+        if (pitchResetTimer) clearTimeout(pitchResetTimer);
+        pitchResetTimer = setTimeout(() => { pitchIncrease = 0; }, PITCH_RESET_MS);
         // Sound via panel (disabled in reduced effects mode)
-        post({ type: "blip", pitch: 1.0 + pitchIncrease * 0.05, enabled: settings.sound && !settings.reducedEffects });
+        const pitch = 1.0 + Math.min(20, pitchIncrease) * 0.05; // cap growth
+        post({ type: "blip", pitch, enabled: settings.sound && !settings.reducedEffects });
         // XP (always gained, even in reduced effects)
         const leveled = xp.addXp(1);
         if (leveled && settings.fireworks && !settings.reducedEffects) post({ type: "fireworks", enabled: settings.sound && !settings.reducedEffects });
@@ -202,9 +206,9 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   function sanitizeLabel(ch: string): string {
-    if (ch === "\n") return "⏎";
+    if (ch === "\n") return "";
     if (ch === "\t") return "↹";
-    if (ch.trim() === "") return "•";
+    if (ch.trim() === "") return "SPACE";
     return ch;
   }
 

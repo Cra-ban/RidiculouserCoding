@@ -19,18 +19,25 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [this.context.extensionUri]
     };
 
-    webviewView.webview.html = this.getHtml(webviewView.webview);
+  webviewView.webview.html = this.getHtml(webviewView.webview);
 
     webviewView.webview.onDidReceiveMessage((msg: PanelMessageToExt) => {
       switch (msg.type) {
         case "ready":
+          const soundBase = vscode.Uri.joinPath(this.context.extensionUri, 'media', 'sound');
+          const soundUris = {
+            blip: webviewView.webview.asWebviewUri(vscode.Uri.joinPath(soundBase, 'blip.wav')).toString(),
+            boom: webviewView.webview.asWebviewUri(vscode.Uri.joinPath(soundBase, 'boom.wav')).toString(),
+            fireworks: webviewView.webview.asWebviewUri(vscode.Uri.joinPath(soundBase, 'fireworks.wav')).toString()
+          };
           this.post({
             type: "init",
             settings: this.getSettings(),
             xp: this.context.globalState.get("xp", 0),
             level: this.context.globalState.get("level", 1),
             xpNext: this.context.globalState.get("xpNextAbs", 100),
-            xpLevelStart: this.context.globalState.get("xpLevelStart", 0)
+            xpLevelStart: this.context.globalState.get("xpLevelStart", 0),
+            soundUris
           });
           break;
         case "toggle":
@@ -67,6 +74,8 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
       blips: cfg.get("blips", true),
       chars: cfg.get("chars", true),
       shake: cfg.get("shake", true),
+      shakeAmplitude: cfg.get("shakeAmplitude", 6),
+      shakeDecayMs: cfg.get("shakeDecayMs", 120),
       sound: cfg.get("sound", true),
       fireworks: cfg.get("fireworks", true),
       baseXp: cfg.get("leveling.baseXp", 50),
@@ -81,6 +90,8 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
       blips: "blips",
       chars: "chars",
       shake: "shake",
+      shakeAmplitude: "shakeAmplitude",
+      shakeDecayMs: "shakeDecayMs",
       sound: "sound",
       fireworks: "fireworks",
       baseXp: "leveling.baseXp",
@@ -100,40 +111,57 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
     const jsUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this.context.extensionUri, "webview", "panel.js")
     );
+    const logoUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, "media", "icons", "icon.svg")
+    );
 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} blob: data:; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} blob: data:; media-src ${webview.cspSource}; connect-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="${cssUri}" rel="stylesheet">
 <title>Ridiculous Coding</title>
 </head>
 <body>
-  <section class="toggles">
-    <label><input id="explosions" type="checkbox"> Explosions</label>
-    <label><input id="blips" type="checkbox"> Blips</label>
-    <label><input id="chars" type="checkbox"> Char labels</label>
-    <label><input id="shake" type="checkbox"> Shake</label>
-    <label><input id="sound" type="checkbox"> Sound</label>
-    <label><input id="fireworks" type="checkbox"> Fireworks</label>
-    <label><input id="reducedEffects" type="checkbox"> Reduced Effects</label>
-  </section>
+  <div class="container">
+    <header class="header">
+      <img class="logo" src="${logoUri}" alt="Ridiculous Coding" />
+      <div class="title">
+        <h1>Ridiculous Coding</h1>
+        <p class="subtitle">Blips, booms, fireworks, XP and levels ✨</p>
+      </div>
+    </header>
 
-  <section class="xp">
-    <div class="labels">
-      <div id="levelLabel">Level: 1</div>
-      <div id="xpLabel">XP: 0 / 100</div>
-    </div>
-    <div class="bar"><div id="barInner"></div></div>
-    <div class="row">
-      <button id="resetBtn">Reset</button>
-      <button id="testFireworks" title="Test fireworks">🎆</button>
-    </div>
-  </section>
+    <section class="card">
+      <h2 class="card-title">Effects</h2>
+      <div class="notice" id="soundNotice" role="button" tabindex="0" title="Click to enable sound">🔊 Click anywhere in this panel to enable sound</div>
+      <div class="toggles">
+        <label class="toggle-pill"><input id="explosions" type="checkbox"><span>Explosions</span></label>
+        <label class="toggle-pill"><input id="blips" type="checkbox"><span>Blips</span></label>
+        <label class="toggle-pill"><input id="chars" type="checkbox"><span>Char labels</span></label>
+        <label class="toggle-pill"><input id="shake" type="checkbox"><span>Shake</span></label>
+        <label class="toggle-pill"><input id="sound" type="checkbox"><span>Sound</span></label>
+        <label class="toggle-pill"><input id="fireworks" type="checkbox"><span>Fireworks</span></label>
+        <label class="toggle-pill"><input id="reducedEffects" type="checkbox"><span>Reduced Effects</span></label>
+      </div>
+    </section>
 
-  <canvas id="fwCanvas" class="hidden"></canvas>
+    <section class="card xp">
+      <h2 class="card-title">Progress</h2>
+      <div class="labels">
+        <div id="levelLabel" class="badge">Level: 1</div>
+        <div id="xpLabel" class="muted">XP: 0 / 100</div>
+      </div>
+      <div class="bar"><div id="barInner"></div></div>
+      <div class="row">
+        <button id="resetBtn" class="btn">Reset</button>
+        <button id="testFireworks" class="btn ghost" title="Test fireworks">🎆 Test Fireworks</button>
+      </div>
+      <canvas id="fwCanvas" class="hidden"></canvas>
+    </section>
+  </div>
 
   <script nonce="${nonce}" src="${jsUri}"></script>
 </body>

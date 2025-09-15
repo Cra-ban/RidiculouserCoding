@@ -13,8 +13,7 @@
   ],
   "activationEvents": [
     "onStartupFinished",
-    "onLanguage:*",
-    "onCommand:ridiculousCoding.showPanel"
+    "onLanguage:*"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -41,6 +40,20 @@
           "default": true,
           "description": "Approximate editor 'shake' by jittering effect decorations."
         },
+        "ridiculousCoding.shakeAmplitude": {
+          "type": "number",
+          "default": 6,
+          "minimum": 0,
+          "maximum": 32,
+          "description": "Shake amplitude in pixels (uniform in all directions)."
+        },
+        "ridiculousCoding.shakeDecayMs": {
+          "type": "number",
+          "default": 120,
+          "minimum": 20,
+          "maximum": 2000,
+          "description": "How long (ms) shake continues after the last keypress."
+        },
         "ridiculousCoding.sound": {
           "type": "boolean",
           "default": true,
@@ -66,6 +79,48 @@
           "type": "boolean",
           "default": false,
           "description": "Reduce visual and sound effects for accessibility. When enabled, disables most animations and sounds."
+        },
+        "ridiculousCoding.combo.maxTrail": {
+          "type": "number",
+          "default": 5,
+          "minimum": 0,
+          "description": "Maximum number of trailing decorations to keep per effect type."
+        },
+        "ridiculousCoding.combo.ttl.blipMs": {
+          "type": "number",
+          "default": 400,
+          "minimum": 0,
+          "description": "Lifetime (ms) of a blip trail decoration."
+        },
+        "ridiculousCoding.combo.ttl.boomMs": {
+          "type": "number",
+          "default": 650,
+          "minimum": 0,
+          "description": "Lifetime (ms) of a boom trail decoration."
+        },
+        "ridiculousCoding.combo.ttl.newlineMs": {
+          "type": "number",
+          "default": 350,
+          "minimum": 0,
+          "description": "Lifetime (ms) of a newline trail decoration."
+        },
+        "ridiculousCoding.combo.anim.frameMs": {
+          "type": "number",
+          "default": 50,
+          "minimum": 10,
+          "description": "Animation frame interval in milliseconds for trail updates."
+        },
+        "ridiculousCoding.combo.anim.floatEm": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "description": "Additional vertical float distance (in em) over lifetime."
+        },
+        "ridiculousCoding.combo.anim.scaleAdd": {
+          "type": "number",
+          "default": 0.6,
+          "minimum": 0,
+          "description": "Additional scale amount added over lifetime."
         }
       }
     },
@@ -73,7 +128,9 @@
       "explorer": [
         {
           "id": "ridiculousCoding.panel",
-          "name": "Ridiculous Coding"
+          "name": "Ridiculous Coding",
+          "type": "webview",
+          "icon": "media/icons/icon.svg"
         }
       ]
     },
