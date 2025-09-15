@@ -368,13 +368,13 @@ export class EffectManager {
         const hPx = Math.max(1, Math.round(frame?.h ?? 1));
         const wPx = Math.max(1, Math.round(frame?.w ?? 1));
         const fontPx = this.getEditorFontSizePx(editor);
-        const targetHeightPx = fontPx; // exactly 1em (same as font size)
+        const targetHeightPx = fontPx * 1.5; // exactly 1em (same as font size)
         const targetWidthPx = Math.max(1, Math.round((wPx / hPx) * targetHeightPx));
         const heightEm = targetHeightPx / fontPx; // 1.0
         const widthEm = targetWidthPx / fontPx;
         const lineEm = this.getCaretHeightEm(editor);
         const txEm = -(widthEm / 2);
-        const tyEm = (heightEm / 2) - (lineEm / 2); // center vertically in line
+        const tyEm = (heightEm/2) - (lineEm / 2); // center vertically in line
         // Build a per-frame SVG at the desired px size so the image is intrinsically sized correctly
         const sheetW = data.sheetW;
         const sheetH = data.sheetH;
