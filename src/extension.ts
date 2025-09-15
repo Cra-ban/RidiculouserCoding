@@ -11,10 +11,13 @@ export function activate(context: vscode.ExtensionContext) {
     blips: cfg.get("blips", true),
     chars: cfg.get("chars", true),
     shake: cfg.get("shake", true),
+    shakeAmplitude: cfg.get("shakeAmplitude", 6),
+    shakeDecayMs: cfg.get("shakeDecayMs", 120),
     sound: cfg.get("sound", true),
     fireworks: cfg.get("fireworks", true),
     baseXp: cfg.get("leveling.baseXp", 50),
-    enableStatusBar: cfg.get("enableStatusBar", true)
+    enableStatusBar: cfg.get("enableStatusBar", true),
+    reducedEffects: cfg.get("reducedEffects", false)
   };
 
   const xp = new XPService(context, settings.baseXp);
@@ -40,6 +43,8 @@ export function activate(context: vscode.ExtensionContext) {
     status.show();
   }
   updateStatus();
+  // One-time panel reveal to help unlock audio on first sound attempt
+  let revealedForSound = false;
 
   // Commands
   context.subscriptions.push(
@@ -57,7 +62,8 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("ridiculousCoding.toggleChars", () => toggle("chars")),
     vscode.commands.registerCommand("ridiculousCoding.toggleShake", () => toggle("shake")),
     vscode.commands.registerCommand("ridiculousCoding.toggleSound", () => toggle("sound")),
-    vscode.commands.registerCommand("ridiculousCoding.toggleFireworks", () => toggle("fireworks"))
+    vscode.commands.registerCommand("ridiculousCoding.toggleFireworks", () => toggle("fireworks")),
+    vscode.commands.registerCommand("ridiculousCoding.toggleReducedEffects", () => toggle("reducedEffects"))
   );
 
   function toggle<K extends keyof Settings>(key: K) {
@@ -69,7 +75,8 @@ export function activate(context: vscode.ExtensionContext) {
       sound: "sound",
       fireworks: "fireworks",
       baseXp: "leveling.baseXp",
-      enableStatusBar: "enableStatusBar"
+      enableStatusBar: "enableStatusBar",
+      reducedEffects: "reducedEffects"
     };
     const configKey = map[key];
     if (!configKey) return;
@@ -83,23 +90,34 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration("ridiculousCoding")) return;
       const cfg = vscode.workspace.getConfiguration("ridiculousCoding");
+      const oldReducedEffects = settings.reducedEffects;
       settings = {
         explosions: cfg.get("explosions", true),
         blips: cfg.get("blips", true),
         chars: cfg.get("chars", true),
         shake: cfg.get("shake", true),
+        shakeAmplitude: cfg.get("shakeAmplitude", 6),
+        shakeDecayMs: cfg.get("shakeDecayMs", 120),
         sound: cfg.get("sound", true),
         fireworks: cfg.get("fireworks", true),
         baseXp: cfg.get("leveling.baseXp", 50),
-        enableStatusBar: cfg.get("enableStatusBar", true)
+        enableStatusBar: cfg.get("enableStatusBar", true),
+        reducedEffects: cfg.get("reducedEffects", false)
       };
+      
+      // If reduced effects was just enabled, clear all decorations
+      if (!oldReducedEffects && settings.reducedEffects) {
+        vscode.window.visibleTextEditors.forEach(editor => {
+          effects.clearAllDecorations(editor);
+        });
+      }
+      
       xp.setBaseXp(settings.baseXp);
       pushState();
       updateStatus();
-      // Re-send init with new settings
+      // Update panel state (init is sent by PanelViewProvider and includes sound URIs)
       post({
-        type: "init",
-        settings,
+        type: "state",
         xp: xp.xp,
         level: xp.level,
         xpNext: xp.xpNextAbs,
@@ -108,18 +126,10 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Pitch increase like the original (decays over time)
+  // Pitch increase that resets shortly after typing stops
   let pitchIncrease = 0;
-  let lastDecay = Date.now();
-  const PITCH_DECREMENT = 2.0 / 1000; // per ms
-  setInterval(() => {
-    const now = Date.now();
-    const dt = now - lastDecay;
-    lastDecay = now;
-    if (pitchIncrease > 0) {
-      pitchIncrease = Math.max(0, pitchIncrease - dt * PITCH_DECREMENT);
-    }
-  }, 50);
+  let pitchResetTimer: NodeJS.Timeout | undefined;
+  const PITCH_RESET_MS = 180; // reset a short time after typing stops
 
   // Event handling: typing, deleting, newline
   let lastLineByEditor = new WeakMap<vscode.TextEditor, number>();
@@ -144,27 +154,39 @@ export function activate(context: vscode.ExtensionContext) {
         isInsert && settings.chars
           ? sanitizeLabel(insertedText[0] ?? "")
           : isDelete && settings.chars
-          ? "⌫"
+          ? "BACKSPACE"
           : undefined;
 
-      if (isInsert && settings.blips) {
-  effects.showBlip(editor, settings.chars, settings.shake, charLabel);
+      if (isInsert && settings.blips && !settings.reducedEffects) {
+        if (settings.sound && !revealedForSound) {
+          revealedForSound = true;
+          panelProvider.reveal();
+        }
+        effects.showBlip(editor, settings.chars, settings.shake, charLabel);
         pitchIncrease += 1.0;
-        // Sound via panel
-        post({ type: "blip", pitch: 1.0 + pitchIncrease * 0.05, enabled: settings.sound });
-        // XP
+        if (pitchResetTimer) clearTimeout(pitchResetTimer);
+        pitchResetTimer = setTimeout(() => { pitchIncrease = 0; }, PITCH_RESET_MS);
+        // Sound via panel (disabled in reduced effects mode)
+        const pitch = 1.0 + Math.min(20, pitchIncrease) * 0.05; // cap growth
+        post({ type: "blip", pitch, enabled: settings.sound && !settings.reducedEffects });
+        // XP (always gained, even in reduced effects)
         const leveled = xp.addXp(1);
-        if (leveled && settings.fireworks) post({ type: "fireworks", enabled: settings.sound });
+        if (leveled && settings.fireworks && !settings.reducedEffects) post({ type: "fireworks", enabled: settings.sound && !settings.reducedEffects });
         pushState();
         updateStatus();
-      } else if (isDelete && settings.explosions) {
-  effects.showBoom(editor, settings.chars, settings.shake, charLabel);
-        post({ type: "boom", enabled: settings.sound });
+      } else if (isInsert) {
+        // Still gain XP even in reduced effects mode
+        const leveled = xp.addXp(1);
+        pushState();
+        updateStatus();
+      } else if (isDelete && settings.explosions && !settings.reducedEffects) {
+        effects.showBoom(editor, settings.chars, settings.shake, charLabel);
+        post({ type: "boom", enabled: settings.sound && !settings.reducedEffects });
         pushState();
       }
 
-      // Newline detection within this change
-      if (settings.blips && insertedText.includes("\n")) {
+      // Newline detection within this change (also disabled in reduced effects)
+      if (settings.blips && insertedText.includes("\n") && !settings.reducedEffects) {
         effects.showNewline(editor, settings.shake);
       }
 
@@ -176,7 +198,7 @@ export function activate(context: vscode.ExtensionContext) {
       const editor = e.textEditor;
       const last = lastLineByEditor.get(editor);
       const now = editor.selection.active.line;
-      if (last !== undefined && now !== last && settings.blips) {
+      if (last !== undefined && now !== last && settings.blips && !settings.reducedEffects) {
         effects.showNewline(editor, settings.shake);
       }
       lastLineByEditor.set(editor, now);
@@ -184,9 +206,9 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   function sanitizeLabel(ch: string): string {
-    if (ch === "\n") return "⏎";
+    if (ch === "\n") return "";
     if (ch === "\t") return "↹";
-    if (ch.trim() === "") return "•";
+    if (ch.trim() === "") return "SPACE";
     return ch;
   }
 
@@ -198,17 +220,7 @@ export function activate(context: vscode.ExtensionContext) {
     post({ type: "state", xp: xp.xp, level: xp.level, xpNext: xp.xpNextAbs, xpLevelStart: xp.xpStartOfLevel });
   }
 
-  // Send initial state when view appears
-  setTimeout(() => {
-    post({
-      type: "init",
-      settings,
-      xp: xp.xp,
-      level: xp.level,
-      xpNext: xp.xpNextAbs,
-      xpLevelStart: xp.xpStartOfLevel
-    });
-  }, 500);
+  // Initial state is sent by PanelViewProvider when webview is ready
 }
 
 export function deactivate() {

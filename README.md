@@ -29,7 +29,30 @@ See Settings → Extensions → Ridiculous Coding:
 - `ridiculousCoding.fireworks` (default: true)
 - `ridiculousCoding.leveling.baseXp` (default: 50)
 - `ridiculousCoding.enableStatusBar` (default: true)
+- `ridiculousCoding.reducedEffects` (default: false) — **Accessibility**: Disable all visual and sound effects when enabled. XP progression still works.
+
+## Accessibility
+For users who need reduced visual effects or find the animations distracting, enable `ridiculousCoding.reducedEffects`. This setting:
+- Disables all visual decorations (blips, booms, newline animations, shake effects)
+- Mutes all sounds (blips, booms, fireworks)
+- Keeps XP progression working normally
+- Can be toggled via the panel or VS Code settings
+
+## Development Setup
+
+To run this extension locally for development:
+
+1. **Install dependencies:** `npm install`
+2. **Compile TypeScript:** `npm run compile` 
+3. **Open in VS Code:** Press F5 or Run → Start Debugging
+
+The extension must be compiled before it can run. If you see panel errors, ensure you've run steps 1-2 first.
 
 ## Notes
 - “Shake” is approximated by jittering decorations; VS Code doesn’t allow moving the window/editor.
 - Sounds are synthesized via Web Audio in the panel (no binaries).
+## Performance & Multi-Editor Support
+- Effects are rate-limited per editor (blips: 20ms, booms: 100ms) for performance.
+- Concurrent decorations are capped per editor to prevent memory leaks.
+- Multi-editor support: effects and XP work independently across multiple open editors.
+- Decorations are properly cleaned up when editors close or lose visibility.
