@@ -368,7 +368,7 @@ export class EffectManager {
         const hPx = Math.max(1, Math.round(frame?.h ?? 1));
         const wPx = Math.max(1, Math.round(frame?.w ?? 1));
         const fontPx = this.getEditorFontSizePx(editor);
-        const targetHeightPx = Math.round(fontPx * 1.1); // slightly larger for visibility
+        const targetHeightPx = fontPx; // exactly 1em (same as font size)
         const targetWidthPx = Math.max(1, Math.round((wPx / hPx) * targetHeightPx));
         const heightEm = targetHeightPx / fontPx; // 1.0
         const widthEm = targetWidthPx / fontPx;
@@ -386,7 +386,7 @@ export class EffectManager {
             after: {
               contentIconPath: scaledIcon,
               width: '0',
-              textDecoration: `none; position:absolute; display:inline-block; line-height:0; transform: translate(calc(${txEm.toFixed(3)}em - 0.5ch), ${tyEm.toFixed(3)}em); transform-origin:left bottom; pointer-events:none; z-index:1000;`
+              textDecoration: `none; position:absolute; display:inline-block; line-height:0; transform: translate(${txEm.toFixed(3)}em, ${tyEm.toFixed(3)}em); transform-origin:left bottom; pointer-events:none; z-index:1000;`
             }
           }
         };
@@ -409,7 +409,7 @@ export class EffectManager {
               contentIconPath: icon,
               height: `${heightEm}em`,
               width: '0',
-              textDecoration: `none; position:absolute; display:inline-block; line-height:0; transform: translate(calc(${txEm.toFixed(3)}em - 0.5ch), ${tyEm.toFixed(3)}em); transform-origin:left bottom; pointer-events:none; z-index:1000;`
+              textDecoration: `none; position:absolute; display:inline-block; line-height:0; transform: translate(${txEm.toFixed(3)}em, ${tyEm.toFixed(3)}em); transform-origin:left bottom; pointer-events:none; z-index:1000;`
             }
           }
         };
